@@ -1,3 +1,4 @@
+
 package com.smartcivic.backend.config;
 
 import org.springframework.context.annotation.Bean;
@@ -17,7 +18,7 @@ public class CorsConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(
                                 "http://localhost:5173",
-                                "https://smart-civic-issue-reporting-system-omega.vercel.app"
+                                "https://frontend-eta-mauve-53.vercel.app"
                         )
                         .allowedMethods(
                                 "GET",
