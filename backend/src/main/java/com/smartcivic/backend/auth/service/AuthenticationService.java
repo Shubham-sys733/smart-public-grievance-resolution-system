@@ -1,0 +1,377 @@
+package com.smartcivic.backend.auth.service;
+
+import com.smartcivic.backend.auth.dto.ForgotPasswordRequest;
+import com.smartcivic.backend.auth.dto.LoginRequest;
+import com.smartcivic.backend.auth.dto.LoginResponse;
+import com.smartcivic.backend.auth.dto.ResetPasswordRequest;
+import com.smartcivic.backend.auth.dto.VerifyRegistrationOtpRequest;
+import com.smartcivic.backend.auth.entity.EmailOtp;
+import com.smartcivic.backend.auth.entity.OtpPurpose;
+import com.smartcivic.backend.auth.exception.InvalidCredentialsException;
+import com.smartcivic.backend.auth.repository.EmailOtpRepository;
+import com.smartcivic.backend.auth.security.JwtService;
+import com.smartcivic.backend.notification.service.NotificationService;
+import com.smartcivic.backend.notification.entity.NotificationType;
+import com.smartcivic.backend.user.entity.AccountStatus;
+import com.smartcivic.backend.user.entity.Role;
+import com.smartcivic.backend.user.entity.User;
+import com.smartcivic.backend.user.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+
+@Service
+public class AuthenticationService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final OtpService otpService;
+    private final EmailOtpRepository emailOtpRepository;
+    private final NotificationService notificationService;
+
+    public AuthenticationService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            OtpService otpService,
+            EmailOtpRepository emailOtpRepository,
+            NotificationService notificationService
+    ) {
+
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.otpService = otpService;
+        this.emailOtpRepository = emailOtpRepository;
+        this.notificationService = notificationService;
+    }
+
+
+    // =====================================================
+    // LOGIN
+    // =====================================================
+
+    public LoginResponse login(LoginRequest request) {
+
+        String email =
+                request.email()
+                        .trim()
+                        .toLowerCase();
+
+        User user =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new InvalidCredentialsException(
+                                        "Invalid email or password"
+                                )
+                        );
+
+        if (user.getAccountStatus() != AccountStatus.ACTIVE) {
+
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
+        boolean passwordMatches =
+                passwordEncoder.matches(
+                        request.password(),
+                        user.getPasswordHash()
+                );
+
+        if (!passwordMatches) {
+
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
+        String token =
+                jwtService.generateToken(
+                        user.getEmail()
+                );
+
+        return new LoginResponse(
+                token,
+                "Bearer"
+        );
+    }
+
+
+    // =====================================================
+    // REGISTRATION OTP VERIFICATION
+    // =====================================================
+
+    @Transactional
+    public void verifyRegistrationOtp(
+            VerifyRegistrationOtpRequest request
+    ) {
+
+        String email =
+                request.email()
+                        .trim()
+                        .toLowerCase();
+
+        User user =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new InvalidCredentialsException(
+                                        "Invalid email or OTP"
+                                )
+                        );
+
+        if (user.getRole() != Role.CITIZEN) {
+
+            throw new InvalidCredentialsException(
+                    "Registration verification is only available for citizens"
+            );
+        }
+
+        if (user.getAccountStatus() != AccountStatus.PENDING) {
+
+            throw new InvalidCredentialsException(
+                    "This account does not require registration verification"
+            );
+        }
+
+        boolean verified =
+                otpService.verifyOtp(
+                        user,
+                        OtpPurpose.REGISTRATION,
+                        request.otp()
+                );
+
+        if (!verified) {
+
+            throw new InvalidCredentialsException(
+                    "Invalid or expired OTP"
+            );
+        }
+
+        user.setEmailVerified(true);
+        user.setAccountStatus(AccountStatus.ACTIVE);
+
+        userRepository.save(user);
+
+        // =====================================================
+// ADMIN NOTIFICATION — NEW CITIZEN REGISTERED
+// =====================================================
+
+        List<User> admins =
+                userRepository.findByRole(Role.ADMIN);
+
+        for (User admin : admins) {
+
+            notificationService.createNotification(
+                    admin,
+                    NotificationType.NEW_CITIZEN_REGISTERED,
+                    "New Citizen Registered",
+                    "A new citizen has joined Smart Civic.",
+                    user.getId()
+            );
+        }
+
+    }
+
+
+
+
+    // FORGOT PASSWORD
+
+
+    @Transactional
+    public void forgotPassword(
+            ForgotPasswordRequest request
+    ) {
+
+        String email =
+                request.email()
+                        .trim()
+                        .toLowerCase();
+
+        User user =
+                userRepository.findByEmail(email)
+                        .orElse(null);
+
+        /*
+         * Generic behavior intentionally used
+         * to prevent account enumeration.
+         */
+        if (user == null) {
+            return;
+        }
+
+        /*
+         * Do not reveal account status to the caller.
+         */
+        if (user.getAccountStatus() != AccountStatus.ACTIVE) {
+            return;
+        }
+
+        /*
+         * Prevent password-reset OTP spam.
+         *
+         * A new OTP can only be generated after
+         * the existing 60-second cooldown expires.
+         */
+        Optional<EmailOtp> latestOtp =
+                emailOtpRepository
+                        .findTopByUserAndPurposeOrderByCreatedAtDesc(
+                                user,
+                                OtpPurpose.PASSWORD_RESET
+                        );
+
+        if (latestOtp.isPresent()) {
+
+            EmailOtp otp = latestOtp.get();
+
+            if (otp.getCreatedAt() != null) {
+
+                Instant cooldownEnd =
+                        otp.getCreatedAt()
+                                .plusSeconds(60);
+
+                if (Instant.now().isBefore(cooldownEnd)) {
+                    return;
+                }
+            }
+        }
+
+        otpService.generateAndSendOtp(
+                user,
+                OtpPurpose.PASSWORD_RESET
+        );
+    }
+    // =====================================================
+    // RESET PASSWORD
+    // =====================================================
+
+    @Transactional
+    public void resetPassword(
+            ResetPasswordRequest request
+    ) {
+
+        String email =
+                request.email()
+                        .trim()
+                        .toLowerCase();
+
+        User user =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new InvalidCredentialsException(
+                                        "Invalid email or OTP"
+                                )
+                        );
+
+        if (user.getAccountStatus() != AccountStatus.ACTIVE) {
+
+            throw new InvalidCredentialsException(
+                    "Your account is not active"
+            );
+        }
+
+        /*
+         * Verify password reset OTP.
+         */
+        boolean verified =
+                otpService.verifyOtp(
+                        user,
+                        OtpPurpose.PASSWORD_RESET,
+                        request.otp()
+                );
+
+        if (!verified) {
+
+            throw new InvalidCredentialsException(
+                    "Invalid or expired OTP"
+            );
+        }
+
+        /*
+         * Never store raw password.
+         */
+        String passwordHash =
+                passwordEncoder.encode(
+                        request.newPassword()
+                );
+
+        user.setPasswordHash(passwordHash);
+
+        userRepository.save(user);
+    }
+
+    // =====================================================
+// RESEND REGISTRATION OTP
+// =====================================================
+
+    @Transactional
+    public void resendRegistrationOtp(String rawEmail) {
+
+        String email = rawEmail.trim().toLowerCase();
+
+        User user =
+                userRepository.findByEmail(email)
+                        .orElse(null);
+
+        /*
+         * Generic behavior:
+         * Do not reveal whether the email exists.
+         */
+        if (user == null) {
+            return;
+        }
+
+        /*
+         * Only pending citizen accounts are eligible
+         * for registration OTP resend.
+         *
+         * Do not reveal role/account status.
+         */
+        if (user.getRole() != Role.CITIZEN
+                || user.getAccountStatus() != AccountStatus.PENDING) {
+            return;
+        }
+
+        /*
+         * Preserve the existing 60-second cooldown.
+         *
+         * If the cooldown has not elapsed, silently return
+         * instead of exposing the cooldown/account state.
+         */
+        Optional<EmailOtp> latestOtp =
+                emailOtpRepository
+                        .findTopByUserAndPurposeOrderByCreatedAtDesc(
+                                user,
+                                OtpPurpose.REGISTRATION
+                        );
+
+        if (latestOtp.isPresent()) {
+
+            EmailOtp otp = latestOtp.get();
+
+            if (otp.getCreatedAt() != null) {
+
+                Instant cooldownEnd =
+                        otp.getCreatedAt()
+                                .plusSeconds(60);
+
+                if (Instant.now().isBefore(cooldownEnd)) {
+                    return;
+                }
+            }
+        }
+
+        otpService.generateAndSendOtp(
+                user,
+                OtpPurpose.REGISTRATION
+        );
+    }
+}

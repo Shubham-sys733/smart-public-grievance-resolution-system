@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: smart-civic-issue-reporting-system
+
+  profiles:
+    active: dev
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+app:
+  file:
+    upload-dir: uploads/issue-images

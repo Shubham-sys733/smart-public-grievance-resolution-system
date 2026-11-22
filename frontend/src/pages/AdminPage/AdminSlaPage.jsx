@@ -1,0 +1,592 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+    getSlaStatistics,
+    getSlaBreachedIssues,
+} from '../../api/adminApi'
+import '../../styles/adminCSS/adminSla.css'
+
+function AdminSlaPage() {
+
+    const navigate = useNavigate()
+
+    const [statistics, setStatistics] = useState(null)
+    const [breachedIssues, setBreachedIssues] = useState([])
+
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+
+
+    /* =========================
+       FORMAT DATE & TIME
+    ========================= */
+
+    const formatDateTime = (dateTime) => {
+
+        if (!dateTime) {
+            return '—'
+        }
+
+        return new Date(dateTime).toLocaleString(
+            'en-IN',
+            {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+            }
+        )
+    }
+
+
+    /* =========================
+       LOAD SLA DATA
+    ========================= */
+
+    const loadSlaData = async () => {
+
+        try {
+
+            setLoading(true)
+            setError('')
+
+            const [
+                statisticsResponse,
+                breachedResponse,
+            ] = await Promise.all([
+                getSlaStatistics(),
+
+                getSlaBreachedIssues({
+                    page: 0,
+                    size: 50,
+                    sort: 'createdAt,desc',
+                }),
+            ])
+
+
+
+
+
+            /* =========================
+               STATISTICS
+            ========================= */
+
+            setStatistics(
+                statisticsResponse?.data ||
+                statisticsResponse ||
+                null
+            )
+
+
+            /* =========================
+               BREACHED ISSUES
+            ========================= */
+
+            setBreachedIssues(
+                breachedResponse?.data?.content ||
+                breachedResponse?.content ||
+                []
+            )
+
+        } catch (err) {
+
+            console.error(
+                'Failed to load SLA data:',
+                err
+            )
+
+            setError(
+                'Failed to load SLA information.'
+            )
+
+        } finally {
+
+            setLoading(false)
+        }
+    }
+
+
+    /* =========================
+       INITIAL LOAD
+    ========================= */
+
+    useEffect(() => {
+
+        loadSlaData()
+
+    }, [])
+
+
+    /* =========================
+       VIEW ISSUE
+    ========================= */
+
+    const handleViewIssue = (issueId) => {
+
+        navigate(
+            `/admin/issues/${issueId}`
+        )
+    }
+
+
+    /* =========================
+       LOADING STATE
+    ========================= */
+
+    if (loading) {
+
+        return (
+            <div className="admin-sla-page">
+
+                <div className="admin-sla-state">
+
+                    Loading SLA information...
+
+                </div>
+
+            </div>
+        )
+    }
+
+
+    /* =========================
+       ERROR STATE
+    ========================= */
+
+    if (error) {
+
+        return (
+            <div className="admin-sla-page">
+
+                <div className="admin-sla-state error">
+
+                    {error}
+
+                </div>
+
+            </div>
+        )
+    }
+
+
+    return (
+        <div className="admin-sla-page">
+
+
+            {/* =========================
+                HEADER
+            ========================= */}
+
+            <div className="admin-sla-header">
+
+                <div>
+
+                    <h1>
+                        SLA Management
+                    </h1>
+
+                    <p>
+                        Monitor service-level deadlines
+                        and breached issues.
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    className="admin-sla-refresh-button"
+                    onClick={loadSlaData}
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            {/* =========================
+                STATISTICS
+            ========================= */}
+
+            <div className="admin-sla-statistics">
+
+
+                {/* TOTAL ISSUES */}
+
+                <div className="admin-sla-stat-card">
+
+                    <span className="admin-sla-stat-label">
+                        Total Issues
+                    </span>
+
+                    <strong>
+                        {statistics?.totalIssues ?? 0}
+                    </strong>
+
+                </div>
+
+
+                {/* SLA BREACHED */}
+
+                <div className="admin-sla-stat-card breached">
+
+                    <span className="admin-sla-stat-label">
+                        SLA Breached
+                    </span>
+
+                    <strong>
+                        {statistics?.breachedIssues ?? 0}
+                    </strong>
+
+                </div>
+
+
+                {/* WITHIN SLA */}
+
+                <div className="admin-sla-stat-card within">
+
+                    <span className="admin-sla-stat-label">
+                        Within SLA
+                    </span>
+
+                    <strong>
+                        {statistics?.withinSlaIssues ?? 0}
+                    </strong>
+
+                </div>
+
+
+                {/* RESOLVED */}
+
+                <div className="admin-sla-stat-card resolved">
+
+                    <span className="admin-sla-stat-label">
+                        Resolved
+                    </span>
+
+                    <strong>
+                        {statistics?.resolvedIssues ?? 0}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            {/* =========================
+                SLA BREACHED ISSUES
+            ========================= */}
+
+            <section className="admin-sla-table-card">
+
+
+                {/* TABLE HEADER */}
+
+                <div className="admin-sla-table-header">
+
+                    <div>
+
+                        <h2>
+                            SLA Breached Issues
+                        </h2>
+
+                        <p>
+                            Issues that have exceeded
+                            their SLA deadline.
+                        </p>
+
+                    </div>
+
+
+                    <span className="admin-sla-count">
+
+                        {breachedIssues.length}
+
+                    </span>
+
+                </div>
+
+
+                {/* =========================
+                    EMPTY STATE
+                ========================= */}
+
+                {breachedIssues.length === 0 ? (
+
+                    <div className="admin-sla-state">
+
+                        No SLA breached issues found.
+
+                    </div>
+
+                ) : (
+
+                    <div className="admin-sla-table-wrapper">
+
+
+                        <table className="admin-sla-table">
+
+
+                            {/* =========================
+                                TABLE HEAD
+                            ========================= */}
+
+                            <thead>
+
+                            <tr>
+
+                                <th>
+                                    Issue
+                                </th>
+
+                                <th>
+                                    Category
+                                </th>
+
+                                <th>
+                                    Priority
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    SLA Due At
+                                </th>
+
+                                <th>
+                                    SLA Status
+                                </th>
+
+                                <th>
+                                    Assigned Worker
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
+                            </tr>
+
+                            </thead>
+
+
+                            {/* =========================
+                                TABLE BODY
+                            ========================= */}
+
+                            <tbody>
+
+                            {breachedIssues.map(
+                                (issue) => (
+
+                                    <tr
+                                        key={issue.id}
+                                    >
+
+
+                                        {/* =========================
+                                            ISSUE
+                                        ========================= */}
+
+                                        <td>
+
+                                            <div className="admin-sla-issue">
+
+                                                <strong>
+                                                    {issue.title}
+                                                </strong>
+
+                                                <span>
+                                                    {issue.address}
+                                                </span>
+
+                                            </div>
+
+                                        </td>
+
+
+                                        {/* =========================
+                                            CATEGORY
+                                        ========================= */}
+
+                                        <td>
+
+                                            <span className="admin-sla-category">
+
+                                                {issue.category}
+
+                                            </span>
+
+                                        </td>
+
+
+                                        {/* =========================
+                                            PRIORITY
+                                        ========================= */}
+
+                                        <td>
+
+                                            <span
+                                                className={`admin-sla-priority priority-${String(
+                                                    issue.priority
+                                                ).toLowerCase()}`}
+                                            >
+
+                                                {issue.priority}
+
+                                            </span>
+
+                                        </td>
+
+
+                                        {/* =========================
+                                            ISSUE STATUS
+                                        ========================= */}
+
+                                        <td>
+
+                                            <span
+                                                className={`admin-sla-status status-${String(
+                                                    issue.status
+                                                ).toLowerCase()}`}
+                                            >
+
+                                                {String(
+                                                    issue.status
+                                                ).replaceAll(
+                                                    '_',
+                                                    ' '
+                                                )}
+
+                                            </span>
+
+                                        </td>
+
+
+                                        {/* =========================
+                                            SLA DUE AT
+                                        ========================= */}
+
+                                        <td>
+
+                                            <span className="admin-sla-due-date">
+
+                                                {formatDateTime(
+                                                    issue.slaDueAt
+                                                )}
+
+                                            </span>
+
+                                        </td>
+
+
+                                        {/* =========================
+                                            SLA STATUS
+                                        ========================= */}
+
+                                        <td>
+
+                                            <span className="admin-sla-status-badge breached">
+
+                                                BREACHED
+
+                                            </span>
+
+
+                                            {issue.slaBreachedAt && (
+
+                                                <span className="admin-sla-breached-at">
+
+                                                    Since{' '}
+
+                                                    {formatDateTime(
+                                                        issue.slaBreachedAt
+                                                    )}
+
+                                                </span>
+
+                                            )}
+
+                                        </td>
+
+
+                                        {/* =========================
+                                            ASSIGNED WORKER
+                                        ========================= */}
+
+                                        <td>
+
+                                            {issue.assignedToName ? (
+
+                                                <div className="admin-sla-worker">
+
+                                                    <strong>
+                                                        {issue.assignedToName}
+                                                    </strong>
+
+
+                                                    {issue.assignedToEmail && (
+
+                                                        <span>
+                                                            {issue.assignedToEmail}
+                                                        </span>
+
+                                                    )}
+
+                                                </div>
+
+                                            ) : (
+
+                                                <span className="admin-sla-unassigned">
+
+                                                    Not Assigned
+
+                                                </span>
+
+                                            )}
+
+                                        </td>
+
+
+                                        {/* =========================
+                                            ACTION
+                                        ========================= */}
+
+                                        <td>
+
+                                            <button
+                                                type="button"
+                                                className="admin-sla-view-button"
+                                                onClick={() =>
+                                                    handleViewIssue(
+                                                        issue.id
+                                                    )
+                                                }
+                                            >
+
+                                                View Issue
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+
+                                )
+                            )}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                )}
+
+            </section>
+
+        </div>
+    )
+}
+
+export default AdminSlaPage

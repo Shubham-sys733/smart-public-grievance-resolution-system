@@ -1,0 +1,466 @@
+/* =====================================================
+   FIELD WORKER — COMPLETED ISSUES
+===================================================== */
+
+.worker-completed-issues-page {
+    width: 100%;
+    min-height: 100%;
+    padding: 28px;
+    box-sizing: border-box;
+}
+
+
+/* =====================================================
+   PAGE HEADER
+===================================================== */
+
+.worker-completed-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.worker-completed-page-header h1 {
+    margin: 0 0 6px;
+    color: #111827;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.worker-completed-page-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   COMPLETED COUNT
+===================================================== */
+
+.worker-completed-count {
+    min-width: 125px;
+    padding: 14px 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+    text-align: center;
+}
+
+.worker-completed-count strong {
+    display: block;
+    color: #111827;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.worker-completed-count span {
+    display: block;
+    margin-top: 3px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+
+/* =====================================================
+   ISSUE LIST
+===================================================== */
+
+.worker-completed-issue-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+
+/* =====================================================
+   ISSUE CARD
+===================================================== */
+
+.worker-completed-issue-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 15px;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            border-color 0.2s ease;
+}
+
+.worker-completed-issue-card:hover {
+    transform: translateY(-2px);
+    border-color: #dbe3f0;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+
+/* =====================================================
+   CARD HEADER
+===================================================== */
+
+.worker-completed-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.worker-completed-issue-id {
+    display: inline-block;
+    margin-bottom: 7px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.worker-completed-card-header h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+
+/* =====================================================
+   RESOLVED STATUS
+===================================================== */
+
+.worker-completed-status {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   DESCRIPTION
+===================================================== */
+
+.completed-issue-description {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 14px 0 20px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.65;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+
+/* =====================================================
+   INFORMATION GRID
+===================================================== */
+
+.worker-completed-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #f0f1f3;
+}
+
+.worker-completed-info-item {
+    min-width: 0;
+}
+
+.worker-completed-info-item span {
+    display: block;
+    margin-bottom: 5px;
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.worker-completed-info-item strong {
+    display: block;
+    overflow: hidden;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   PRIORITY
+===================================================== */
+
+.completed-priority-high {
+    color: #dc2626 !important;
+}
+
+.completed-priority-medium {
+    color: #d97706 !important;
+}
+
+.completed-priority-low {
+    color: #059669 !important;
+}
+
+
+/* =====================================================
+   SLA RESULT
+===================================================== */
+
+.worker-completed-sla {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid #f0f1f3;
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+.worker-completed-sla span {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.worker-completed-sla strong {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.completed-sla-breached {
+    color: #dc2626;
+}
+
+.completed-sla-success {
+    color: #059669;
+}
+
+.completed-sla-neutral {
+    color: #6b7280;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.worker-completed-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.worker-completed-view-btn {
+    border: none;
+    border-radius: 9px;
+    padding: 9px 16px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+            background 0.2s ease,
+            transform 0.2s ease;
+}
+
+.worker-completed-view-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.worker-completed-view-btn:active {
+    transform: translateY(0);
+}
+
+
+/* =====================================================
+   EMPTY / LOADING / ERROR
+===================================================== */
+
+.worker-completed-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+    padding: 30px;
+    border: 1px dashed #d1d5db;
+    border-radius: 14px;
+    background: #ffffff;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.worker-completed-state h3 {
+    margin: 12px 0 6px;
+    color: #111827;
+    font-size: 17px;
+}
+
+.worker-completed-state p {
+    margin: 0;
+    max-width: 420px;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   EMPTY ICON
+===================================================== */
+
+.worker-completed-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   SPINNER
+===================================================== */
+
+.worker-completed-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: workerCompletedSpin 0.8s linear infinite;
+}
+
+@keyframes workerCompletedSpin {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+.worker-completed-error {
+    border-style: solid;
+    border-color: #fecaca;
+    background: #fffafa;
+}
+
+.worker-completed-error h3 {
+    color: #b91c1c;
+}
+
+.worker-completed-error button {
+    margin-top: 16px;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 15px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.worker-completed-error button:hover {
+    background: #b91c1c;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .worker-completed-issue-list {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+@media (max-width: 800px) {
+
+    .worker-completed-issues-page {
+        padding: 20px;
+    }
+
+    .worker-completed-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .worker-completed-count {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+}
+
+
+@media (max-width: 560px) {
+
+    .worker-completed-issues-page {
+        padding: 15px;
+    }
+
+    .worker-completed-issue-card {
+        padding: 16px;
+    }
+
+    .worker-completed-card-header {
+        flex-direction: column;
+    }
+
+    .worker-completed-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .worker-completed-sla {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .worker-completed-card-footer {
+        justify-content: stretch;
+    }
+
+    .worker-completed-view-btn {
+        width: 100%;
+    }
+
+}
